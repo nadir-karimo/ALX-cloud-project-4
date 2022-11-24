@@ -1,7 +1,7 @@
 import * as AWS from 'aws-sdk'
 //import * as AWSXRay from 'aws-xray-sdk'
 import { DocumentClient } from 'aws-sdk/clients/dynamodb'
-//import { createLogger } from '../utils/logger'
+import { createLogger } from '../utils/logger'
 import { TodoItem } from '../models/TodoItem'
 import { TodoUpdate } from '../models/TodoUpdate';
 var AWSXRay = require('aws-xray-sdk')
@@ -14,10 +14,14 @@ export class TodosAccess{
     constructor(
         private readonly documentClient : DocumentClient = new XAWS.DynamoDB.DocumentClient(),
         private readonly todosTable = process.env.TODOS_TABLE,
-        private readonly todosIndex = process.env.TODOS_CREATED_AT_INDEX
+        private readonly todosIndex = process.env.TODOS_CREATED_AT_INDEX,
+        private logger = createLogger('auth')
     ){}
 
     async createTodoItem(todoItem: TodoItem): Promise<TodoItem>{
+        this.logger.info('creating new todo', {
+            todo: JSON.stringify(todoItem)
+            })
         await this.documentClient.put({
             TableName: this.todosTable,
             Item: todoItem
@@ -27,6 +31,9 @@ export class TodosAccess{
     }
 
     async getAllTodos(userId:string): Promise<TodoItem[]>{
+        this.logger.info('getting all todos', {
+            userId: userId
+            })
         const res = await this.documentClient.query({
             TableName: this.todosTable,
             IndexName: this.todosIndex,
@@ -40,6 +47,9 @@ export class TodosAccess{
     }
 
     async updateTodoItem(todoId:string,userId:string,todoUpdate:TodoUpdate):Promise<TodoUpdate>{
+        this.logger.info('updating todo', {
+            todo: JSON.stringify(todoUpdate)
+            })
         await this.documentClient.update({
             TableName: this.todosTable,
             Key: {
@@ -62,6 +72,9 @@ export class TodosAccess{
     }
 
     async deleteTodoItem(todoId:string,userId:string):Promise<string>{
+        this.logger.info('removing todo', {
+            todo: (todoId)
+            })
         await this.documentClient.delete({
             TableName: this.todosTable,
             Key: {
@@ -74,6 +87,9 @@ export class TodosAccess{
     }
 
     async updateTodoAttachmentUrl(todoId:string,userId:string,attachmentUrl:string):Promise<void>{
+        this.logger.info('updating todo attachment', {
+            todo: JSON.stringify(attachmentUrl)
+            })
         await this.documentClient.update({
             TableName: this.todosTable,
             Key:{
